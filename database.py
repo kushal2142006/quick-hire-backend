@@ -1,30 +1,26 @@
-import mysql.connector
-from dotenv import load_dotenv
-import os
+import sqlite3
 
-load_dotenv()
-
-print("🔄 Connecting to MySQL Database...")
+print("🔄 Connecting to SQLite Database...")
 
 try:
-    db = mysql.connector.connect(
-        host=os.getenv("MYSQL_HOST"),
-        user=os.getenv("MYSQL_USER"),
-        password=os.getenv("MYSQL_PASSWORD"),
-        database=os.getenv("MYSQL_DATABASE")
+    db = sqlite3.connect("database.db", check_same_thread=False)
+    db.row_factory = sqlite3.Row
+    cursor = db.cursor()
+
+    print("✅ SQLite Database Connected Successfully!")
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        email TEXT UNIQUE,
+        phone TEXT,
+        password TEXT,
+        role TEXT
     )
-    
-    cursor = db.cursor(dictionary=True)
-    print("✅ Database Connected Successfully!")
-    
-except mysql.connector.Error as err:
-    if err.errno == 2003:
-        print("❌ ERROR: MySQL Server is not running!")
-        print("Fix: Open Services (Windows+R → services.msc) and start MySQL80")
-    elif err.errno == 1045:
-        print("❌ ERROR: Wrong username or password!")
-    elif err.errno == 1049:
-        print("❌ ERROR: Database 'quick_hire' does not exist!")
-    else:
-        print(f"❌ ERROR: {err}")
+    """)
+    db.commit()
+
+except Exception as e:
+    print(f"❌ ERROR: {e}")
     exit()
