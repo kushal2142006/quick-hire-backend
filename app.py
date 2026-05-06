@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from database import cursor, db
@@ -9,6 +10,9 @@ load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+
+# ✅ Get port from environment or default to 5000
+PORT = int(os.getenv('PORT', 5000))
 
 # =========================
 # HOME ENDPOINT
@@ -403,8 +407,9 @@ if __name__ == "__main__":
     print("\n" + "="*50)
     print("🚀 Urban Company Backend Starting...")
     print("="*50)
-    print("📍 Server running on: http://127.0.0.1:5000")
-    print("📍 API Base URL: http://127.0.0.1:5000/api/")
+    print(f"📍 Server running on: 0.0.0.0:{PORT}")
+    print("📍 API Base URL: /api/")
     print("="*50 + "\n")
     
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    # ✅ IMPORTANT: Use 0.0.0.0 and dynamic PORT
+    app.run(debug=False, host="0.0.0.0", port=PORT)
