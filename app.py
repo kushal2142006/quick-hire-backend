@@ -3,6 +3,7 @@ from flask_cors import CORS
 from database import cursor, db
 import bcrypt
 from dotenv import load_dotenv
+import traceback
 
 load_dotenv()
 
@@ -28,6 +29,7 @@ def home():
 def signup():
     try:
         data = request.json
+        print("📝 Signup Request Data:", data)  # ✅ Debug print
 
         # Validate input
         if not all([data.get("name"), data.get("email"), data.get("password")]):
@@ -37,12 +39,16 @@ def signup():
             }), 400
 
         # Check if email already exists
-        cursor.execute("SELECT * FROM users WHERE email=%s", (data["email"],))
-        if cursor.fetchone():
-            return jsonify({
-                "status": "error",
-                "message": "Email already registered"
-            }), 400
+        try:
+            cursor.execute("SELECT * FROM users WHERE email=?", (data["email"],))
+            if cursor.fetchone():
+                return jsonify({
+                    "status": "error",
+                    "message": "Email already registered"
+                }), 400
+        except Exception as db_error:
+            print("❌ Database Check Error:", db_error)  # ✅ Debug print
+            raise
 
         # Hash password
         hashed_password = bcrypt.hashpw(
@@ -53,7 +59,7 @@ def signup():
         # Insert user
         query = """
         INSERT INTO users (name, email, phone, password, role)
-        VALUES (%s, %s, %s, %s, %s)
+        VALUES (?, ?, ?, ?, ?)
         """
         
         values = (
@@ -64,8 +70,12 @@ def signup():
             data.get("role", "user")
         )
 
+        print("🔍 Query:", query)  # ✅ Debug print
+        print("📊 Values:", values)  # ✅ Debug print
+
         cursor.execute(query, values)
         db.commit()
+        print("✅ User inserted successfully!")  # ✅ Debug print
 
         return jsonify({
             "status": "success",
@@ -73,6 +83,10 @@ def signup():
         }), 201
 
     except Exception as e:
+        print("❌ SIGNUP ERROR:", str(e))  # ✅ Debug print
+        print("❌ ERROR TYPE:", type(e))  # ✅ Debug print
+        print("❌ TRACEBACK:", traceback.format_exc())  # ✅ Debug print
+        
         return jsonify({
             "status": "error",
             "message": str(e)
@@ -95,7 +109,7 @@ def login():
             }), 400
 
         # Get user
-        cursor.execute("SELECT * FROM users WHERE email=%s", (data["email"],))
+        cursor.execute("SELECT * FROM users WHERE email=?", (data["email"],))
         user = cursor.fetchone()
 
         if not user:
@@ -126,6 +140,8 @@ def login():
         }), 200
 
     except Exception as e:
+        print("❌ LOGIN ERROR:", str(e))
+        print("❌ TRACEBACK:", traceback.format_exc())
         return jsonify({
             "status": "error",
             "message": str(e)
@@ -151,6 +167,8 @@ def get_services():
         }), 200
 
     except Exception as e:
+        print("❌ GET SERVICES ERROR:", str(e))
+        print("❌ TRACEBACK:", traceback.format_exc())
         return jsonify({
             "status": "error",
             "message": str(e)
@@ -173,7 +191,7 @@ def add_service():
 
         query = """
         INSERT INTO services (provider_id, service_name, description, price)
-        VALUES (%s, %s, %s, %s)
+        VALUES (?, ?, ?, ?)
         """
 
         values = (
@@ -192,6 +210,8 @@ def add_service():
         }), 201
 
     except Exception as e:
+        print("❌ ADD SERVICE ERROR:", str(e))
+        print("❌ TRACEBACK:", traceback.format_exc())
         return jsonify({
             "status": "error",
             "message": str(e)
@@ -215,7 +235,7 @@ def create_booking():
 
         query = """
         INSERT INTO bookings (user_id, provider_id, service_id, booking_date, booking_time, address, status)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         """
 
         values = (
@@ -237,6 +257,8 @@ def create_booking():
         }), 201
 
     except Exception as e:
+        print("❌ CREATE BOOKING ERROR:", str(e))
+        print("❌ TRACEBACK:", traceback.format_exc())
         return jsonify({
             "status": "error",
             "message": str(e)
@@ -254,7 +276,7 @@ def get_user_bookings(user_id):
             FROM bookings b
             JOIN services s ON b.service_id = s.id
             JOIN users u ON b.provider_id = u.id
-            WHERE b.user_id=%s
+            WHERE b.user_id=?
         """, (user_id,))
         
         bookings = cursor.fetchall()
@@ -265,6 +287,8 @@ def get_user_bookings(user_id):
         }), 200
 
     except Exception as e:
+        print("❌ GET USER BOOKINGS ERROR:", str(e))
+        print("❌ TRACEBACK:", traceback.format_exc())
         return jsonify({
             "status": "error",
             "message": str(e)
@@ -282,7 +306,7 @@ def get_provider_bookings(provider_id):
             FROM bookings b
             JOIN services s ON b.service_id = s.id
             JOIN users u ON b.user_id = u.id
-            WHERE b.provider_id=%s
+            WHERE b.provider_id=?
         """, (provider_id,))
         
         bookings = cursor.fetchall()
@@ -293,6 +317,8 @@ def get_provider_bookings(provider_id):
         }), 200
 
     except Exception as e:
+        print("❌ GET PROVIDER BOOKINGS ERROR:", str(e))
+        print("❌ TRACEBACK:", traceback.format_exc())
         return jsonify({
             "status": "error",
             "message": str(e)
@@ -315,7 +341,7 @@ def send_message():
 
         query = """
         INSERT INTO messages (sender_id, receiver_id, message)
-        VALUES (%s, %s, %s)
+        VALUES (?, ?, ?)
         """
 
         values = (
@@ -333,6 +359,8 @@ def send_message():
         }), 201
 
     except Exception as e:
+        print("❌ SEND MESSAGE ERROR:", str(e))
+        print("❌ TRACEBACK:", traceback.format_exc())
         return jsonify({
             "status": "error",
             "message": str(e)
@@ -347,8 +375,8 @@ def get_chat(user1, user2):
     try:
         cursor.execute("""
             SELECT * FROM messages
-            WHERE (sender_id=%s AND receiver_id=%s)
-            OR (sender_id=%s AND receiver_id=%s)
+            WHERE (sender_id=? AND receiver_id=?)
+            OR (sender_id=? AND receiver_id=?)
             ORDER BY id ASC
         """, (user1, user2, user2, user1))
         
@@ -360,6 +388,8 @@ def get_chat(user1, user2):
         }), 200
 
     except Exception as e:
+        print("❌ GET CHAT ERROR:", str(e))
+        print("❌ TRACEBACK:", traceback.format_exc())
         return jsonify({
             "status": "error",
             "message": str(e)
