@@ -22,7 +22,7 @@ PORT = int(os.getenv('PORT', 5000))
 def home():
     return jsonify({
         "status": "success",
-        "message": "Urban Company Backend Running ✅"
+        "message": "QuickHire Backend Running ✅"
     })
 
 # =========================
@@ -33,7 +33,7 @@ def home():
 def signup():
     try:
         data = request.json
-        print("📝 Signup Request Data:", data)  # ✅ Debug print
+        print("📝 Signup Request Data:", data)
 
         # Validate input
         if not all([data.get("name"), data.get("email"), data.get("password")]):
@@ -51,7 +51,7 @@ def signup():
                     "message": "Email already registered"
                 }), 400
         except Exception as db_error:
-            print("❌ Database Check Error:", db_error)  # ✅ Debug print
+            print("❌ Database Check Error:", db_error)
             raise
 
         # Hash password
@@ -74,12 +74,12 @@ def signup():
             data.get("role", "user")
         )
 
-        print("🔍 Query:", query)  # ✅ Debug print
-        print("📊 Values:", values)  # ✅ Debug print
+        print("🔍 Query:", query)
+        print("📊 Values:", values)
 
         cursor.execute(query, values)
         db.commit()
-        print("✅ User inserted successfully!")  # ✅ Debug print
+        print("✅ User inserted successfully!")
 
         return jsonify({
             "status": "success",
@@ -87,9 +87,9 @@ def signup():
         }), 201
 
     except Exception as e:
-        print("❌ SIGNUP ERROR:", str(e))  # ✅ Debug print
-        print("❌ ERROR TYPE:", type(e))  # ✅ Debug print
-        print("❌ TRACEBACK:", traceback.format_exc())  # ✅ Debug print
+        print("❌ SIGNUP ERROR:", str(e))
+        print("❌ ERROR TYPE:", type(e))
+        print("❌ TRACEBACK:", traceback.format_exc())
         
         return jsonify({
             "status": "error",
@@ -405,11 +405,10 @@ def get_chat(user1, user2):
 
 if __name__ == "__main__":
     print("\n" + "="*50)
-    print("🚀 Urban Company Backend Starting...")
+    print("🚀 QuickHire Backend Starting...")
     print("="*50)
     print(f"📍 Server running on: 0.0.0.0:{PORT}")
     print("📍 API Base URL: /api/")
     print("="*50 + "\n")
     
-    # ✅ IMPORTANT: Use 0.0.0.0 and dynamic PORT
     app.run(debug=False, host="0.0.0.0", port=PORT)
